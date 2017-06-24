@@ -19,7 +19,6 @@
 ##available targets: #
 .DEFAULT_GOAL := Bela
 
-LDFLAGS=`/usr/xenomai/bin/xeno-config --skin=native --ldflags` -lasound -lsndfile
 AT?=@
 NO_PROJECT_TARGETS=help coreclean distclean stop nostartup connect_startup connect idestart idestop idestartup idenostartup ideconnect scsynthstart scsynthstop scsynthconnect scsynthstartup scsynthnostartup update checkupdate updateunsafe
 NO_PROJECT_TARGETS_MESSAGE=PROJECT or EXAMPLE should be set for all targets except: $(NO_PROJECT_TARGETS)
@@ -80,7 +79,7 @@ endif
 ifeq ($(IS_SUPERCOLLIDER_PROJECT),1)
   RUN_COMMAND?=sclang $(SUPERCOLLIDER_FILE)
 else
-  RUN_COMMAND?=$(OUTPUT_FILE) $(COMMAND_LINE_OPTIONS)
+  RUN_COMMAND?=$(OUTPUT_FILE) $(COMMAND_LINE_OPTIONS) --session=bela
 endif
 RUN_IDE_COMMAND?=PATH=$$PATH:/usr/local/bin/ stdbuf -i0 -o0 -e0 $(RUN_COMMAND)
 BELA_AUDIO_THREAD_NAME?=bela-audio 
@@ -102,18 +101,26 @@ QUIET?=false
 RM := rm -rf
 STATIC_LIBS := ./lib/libprussdrv.a ./lib/libNE10.a ./lib/libmathneon.a
 
-# refresh library cache and check if libpd is there
-#TEST_LIBPD := $(shell ldconfig; ldconfig -p | grep "libpd\.so")  # safest but slower way of checking
-LIBPD_PATH = /usr/lib/libpd.so
-TEST_LIBPD := $(shell which $(LIBPD_PATH))
+# check if ldconfig knows about libpd, link it in.
+TEST_LIBPD := $(shell ldconfig -p | grep "libpd\.so")
 ifneq ($(strip $(TEST_LIBPD)), )
-# if libpd is there, link it in
+  # if ldconfig knows about libpd, link it in.
+  LIBS += -lpd -lpthread
 endif
-INCLUDES := -I$(PROJECT_DIR) -I./include -I/usr/include/ne10
-DEFAULT_XENOMAI_CFLAGS := `/usr/xenomai/bin/xeno-config --cflags --skin=native`
-DEFAULT_COMMON_FLAGS := -O3 -march=armv7-a -mtune=cortex-a8 -mfloat-abi=hard -mfpu=neon -ftree-vectorize  $(DEFAULT_XENOMAI_CFLAGS)
+
+INCLUDES := -I$(PROJECT_DIR) -I./include -I/usr/include/
+# Xenomai flags and cleaning up any `pie` introduced because of gcc 6.3, as it would confuse clang
+DEFAULT_XENOMAI_CFLAGS := $(shell /usr/xenomai/bin/xeno-config --cflags --skin=native)
+DEFAULT_XENOMAI_CFLAGS := $(filter-out -no-pie, $(DEFAULT_XENOMAI_CFLAGS))
+DEFAULT_XENOMAI_CFLAGS := $(filter-out -fno-pie, $(DEFAULT_XENOMAI_CFLAGS))
+DEFAULT_XENOMAI_LDFLAGS := $(shell /usr/xenomai/bin/xeno-config --skin=native --ldflags)
+DEFAULT_XENOMAI_LDFLAGS := $(filter-out -no-pie, $(DEFAULT_XENOMAI_LDFLAGS))
+DEFAULT_XENOMAI_LDFLAGS := $(filter-out -fno-pie, $(DEFAULT_XENOMAI_LDFLAGS))
+
+DEFAULT_COMMON_FLAGS := $(DEFAULT_XENOMAI_CFLAGS) -O3 -march=armv7-a -mtune=cortex-a8 -mfloat-abi=hard -mfpu=neon -ftree-vectorize
 DEFAULT_CPPFLAGS := $(DEFAULT_COMMON_FLAGS) -std=c++11
 DEFAULT_CFLAGS := $(DEFAULT_COMMON_FLAGS) -std=gnu11
+LDFLAGS += $(DEFAULT_XENOMAI_LDFLAGS) -lasound -lsndfile -Llib/
 
 ifndef COMPILER
 # check whether clang is installed
@@ -121,16 +128,25 @@ ifndef COMPILER
   ifneq ($(strip $(TEST_COMPILER)), )
     #if it is installed, use it
     COMPILER := clang
+	CLANG_PATH:=$(TEST_COMPILER)
   else
-    COMPILER := gcc
+    # just in case the PATH is broken, check for the full path to clang
+	# this is a workaround for people with old IDE startup script (without /usr/local/bin in the $PATH)
+    CLANG_PATH:=/usr/local/bin/clang
+    TEST_COMPILER := $(shell [ -e $(CLANG_PATH) ] && echo yes)
+    ifneq ($(strip $(TEST_COMPILER)), )
+      COMPILER := clang
+    else
+      COMPILER := gcc
+	endif
   endif
 endif
 
 ifeq ($(COMPILER), clang)
-  CC=clang
-  CXX=clang++
-  DEFAULT_CPPFLAGS += -DNDEBUG 
-  DEFAULT_CFLAGS += -DNDEBUG
+  CC=$(CLANG_PATH)
+  CXX=$(CLANG_PATH)++
+  DEFAULT_CPPFLAGS += -DNDEBUG -no-integrated-as
+  DEFAULT_CFLAGS += -DNDEBUG -no-integrated-as
 else 
   ifeq ($(COMPILER), gcc)
     CC=gcc
@@ -210,7 +226,7 @@ syntax: $(PROJECT_OBJS)
 build/core/%.o: ./core/%.c
 	$(AT) echo 'Building $(notdir $<)...'
 #	$(AT) echo 'Invoking: C++ Compiler $(CXX)'
-	$(AT) $(CC) $(SYNTAX_FLAG) $(INCLUDES) $(DEFAULT_CFLAGS) -Wall -c -fmessage-length=0 -U_FORTIFY_SOURCE -MMD -MP -MF"$(@:%.o=%.d)" -o "$@" "$<" $(CFLAGS)
+	$(AT) $(CC) $(SYNTAX_FLAG) $(INCLUDES) $(DEFAULT_CFLAGS)  -Wa,-mimplicit-it=arm -Wall -c -fmessage-length=0 -U_FORTIFY_SOURCE -MMD -MP -MF"$(@:%.o=%.d)" -o "$@" "$<" $(CFLAGS)
 	$(AT) echo ' ...done'
 	$(AT) echo ' '
 
@@ -283,9 +299,9 @@ $(OUTPUT_FILE): $(CORE_ASM_OBJS) $(CORE_OBJS) $(PROJECT_OBJS) $(STATIC_LIBS) $(D
 	    $(shell bash -c '[ `nm $(PROJECT_OBJS) 2>/dev/null | grep -w T | grep -w main | wc -l` == '0' ] && echo "$(DEFAULT_MAIN_OBJS)" || : '))
 	$(AT) #If there is a .pd file AND there is no "render" symbol then link in the $(DEFAULT_PD_OBJS) 
 	$(eval DEFAULT_PD_CONDITIONAL :=\
-	    $(shell bash -c '{ ls $(PROJECT_DIR)/*.pd &>/dev/null && [ `nm $(PROJECT_OBJS) 2>/dev/null | grep -w T | grep "render.*BelaContext" | wc -l` -eq 0 ]; } && echo '$(DEFAULT_PD_OBJS)' || : ' ))
+	    $(shell bash -c '{ ls $(PROJECT_DIR)/*.pd &>/dev/null && [ `nm -C $(PROJECT_OBJS) 2>/dev/null | grep -w T | grep "\<render\>" | wc -l` -eq 0 ]; } && echo '$(DEFAULT_PD_OBJS)' || : ' ))
 	$(AT) echo 'Linking...'
-	$(AT) $(CXX) $(SYNTAX_FLAG) $(LDFLAGS) -L/usr/xenomai/lib -L/usr/arm-linux-gnueabihf/lib -L/usr/arm-linux-gnueabihf/lib/xenomai -L/usr/lib/arm-linux-gnueabihf -pthread -Wpointer-arith -o "$(PROJECT_DIR)/$(PROJECT)" $(CORE_ASM_OBJS) $(CORE_OBJS) $(DEFAULT_MAIN_CONDITIONAL) $(DEFAULT_PD_CONDITIONAL) $(ASM_OBJS) $(C_OBJS) $(CPP_OBJS) $(STATIC_LIBS) $(LIBS) $(LDLIBS)
+	$(AT) $(CXX) $(SYNTAX_FLAG) $(LDFLAGS) -pthread -Wpointer-arith -o "$(PROJECT_DIR)/$(PROJECT)" $(CORE_ASM_OBJS) $(CORE_OBJS) $(DEFAULT_MAIN_CONDITIONAL) $(DEFAULT_PD_CONDITIONAL) $(ASM_OBJS) $(C_OBJS) $(CPP_OBJS) $(STATIC_LIBS) $(LIBS) $(LDLIBS)
 	$(AT) echo ' ...done'
 endif
 # Other Targets:
