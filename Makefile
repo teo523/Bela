@@ -19,7 +19,7 @@
 ##available targets: #
 .DEFAULT_GOAL := Bela
 
-LDFLAGS=`/usr/xenomai/bin/xeno-config --skin=native --ldflags` -lasound -lsndfile
+LDFLAGS=`/usr/xenomai/bin/xeno-config --skin=native --ldflags` -lasound -lsndfile -lseasocks -lz
 AT?=@
 NO_PROJECT_TARGETS=help coreclean distclean stop nostartup connect_startup connect idestart idestop idestartup idenostartup ideconnect scsynthstart scsynthstop scsynthconnect scsynthstartup scsynthnostartup update checkupdate updateunsafe
 NO_PROJECT_TARGETS_MESSAGE=PROJECT or EXAMPLE should be set for all targets except: $(NO_PROJECT_TARGETS)
@@ -112,7 +112,7 @@ endif
 INCLUDES := -I$(PROJECT_DIR) -I./include -I/usr/include/ne10
 DEFAULT_XENOMAI_CFLAGS := `/usr/xenomai/bin/xeno-config --cflags --skin=native`
 DEFAULT_COMMON_FLAGS := -O3 -march=armv7-a -mtune=cortex-a8 -mfloat-abi=hard -mfpu=neon -ftree-vectorize  $(DEFAULT_XENOMAI_CFLAGS)
-DEFAULT_CPPFLAGS := $(DEFAULT_COMMON_FLAGS) -std=c++11
+DEFAULT_CPPFLAGS := $(DEFAULT_COMMON_FLAGS) -std=c++11 -Wno-varargs
 DEFAULT_CFLAGS := $(DEFAULT_COMMON_FLAGS) -std=gnu11
 
 ifndef COMPILER
