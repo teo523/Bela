@@ -421,7 +421,7 @@ settingsView.on('run-on-boot', function (project) {
 	return socket.emit('run-on-boot', project);
 });
 settingsView.on('halt', function () {
-	socket.emit('sh-command', 'halt');
+	socket.emit('shutdown');
 	consoleView.emit('warn', 'Shutting down...');
 });
 settingsView.on('warning', function (text) {
@@ -3356,7 +3356,7 @@ var SettingsView = function (_View) {
 
 			// build the popup content
 			popup.title('About Bela');
-			popup.subtitle('You are using Bela Version 0.3.0, October 2017. Bela is an open source project, and is a product of the Augmented Instruments Laboratory at Queen Mary University of London, and Augmented Instruments Ltd. For more information, visit http://bela.io');
+			popup.subtitle('Bela is an open source project, and is a product of the Augmented Instruments Laboratory at Queen Mary University of London, and Augmented Instruments Ltd. For more information, visit http://bela.io');
 			var form = [];
 			form.push('<button type="submit" class="button popup-continue">Close</button>');
 
