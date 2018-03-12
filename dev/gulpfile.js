@@ -12,6 +12,12 @@ var buffer = require('vinyl-buffer');
 var less = require('gulp-less');
 var rsync = require('gulp-rsync');
 var debug = require('gulp-debug');
+// Sass-specific things:
+var sass = require('gulp-sass');
+var input = './IDE/public/styles/sass';
+var output = './IDE/public/styles';
+var rename = require('gulp-rename');
+
 
 var host = '192.168.7.2';
 var user = 'root';
@@ -20,7 +26,7 @@ var remotePath = '/root/Bela/IDE/';
 
 gulp.task('commit', ['browserify', 'scope-browserify']);
 
-gulp.task('default', ['commit', 'killnode', 'upload', 'restartnode', 'watch']);
+gulp.task('default', ['commit', 'killnode', 'upload', 'restartnode', 'watch', 'sass']);
 
 gulp.task('watch', ['upload'], function(){
 
@@ -34,6 +40,8 @@ gulp.task('watch', ['upload'], function(){
 	
 	// when the scope browser js changes, browserify it
 	gulp.watch(['./scope-src/**'], ['scope-browserify']);
+
+	gulp.watch(['./src/styles/**'], ['sass']);
 	
 	// when the less changes, compile it and stick it in public/css
 	// gulp.watch(['../IDE/public/less/**'], ['less']);
@@ -125,12 +133,14 @@ gulp.task('scope-browserify', () => {
         .pipe(gulp.dest('../IDE/public/scope/js/'));
 });
 
-gulp.task('less', () => {
-	gulp.src('../IDE/public/less/*.less')
-		.pipe(sourcemaps.init())
-		.pipe(less())
-		.pipe(sourcemaps.write())
-		.pipe(gulp.dest('../IDE/public/css/'));
+// Sass task. Get to the first log point, seems to execute without error, never hits the second and there's no output:
+
+gulp.task('sass', () => {
+	console.log('sass reporting in');
+  return gulp.src('./src/styles/**/*.scss')
+    .pipe(sass('bela-style.css'))
+    .pipe(gulp.dest('../IDE/public/styles'));
+    console.log('a sphincter says what');
 });
 
 function startNode(callback){
