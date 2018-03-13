@@ -9,13 +9,10 @@ var babelify = require('babelify');
 var source = require('vinyl-source-stream');
 var sourcemaps = require('gulp-sourcemaps');
 var buffer = require('vinyl-buffer');
-var less = require('gulp-less');
 var rsync = require('gulp-rsync');
 var debug = require('gulp-debug');
 // Sass-specific things:
 var sass = require('gulp-sass');
-var input = './IDE/public/styles/sass';
-var output = './IDE/public/styles';
 var rename = require('gulp-rename');
 
 
@@ -24,9 +21,9 @@ var user = 'root';
 var pass = 'a';
 var remotePath = '/root/Bela/IDE/';
 
-gulp.task('commit', ['browserify', 'scope-browserify']);
+gulp.task('commit', ['browserify', 'scope-browserify', 'sass']);
 
-gulp.task('default', ['commit', 'killnode', 'upload', 'restartnode', 'watch', 'sass']);
+gulp.task('default', ['commit', 'killnode', 'upload', 'restartnode', 'watch']);
 
 gulp.task('watch', ['upload'], function(){
 
@@ -137,10 +134,13 @@ gulp.task('scope-browserify', () => {
 
 gulp.task('sass', () => {
 	console.log('sass reporting in');
-  return gulp.src('./src/styles/*.scss')
+  return gulp
+  	.src('./src/styles/*.scss')
     .pipe(sass('bela-style.css'))
+    	.on('error', function() {
+    		console.log("WHOOPS");
+    	})
     .pipe(gulp.dest('../IDE/public/styles'));
-    console.log('a sphincter says what');
 });
 
 function startNode(callback){
