@@ -137,7 +137,7 @@ gulp.task('scope-browserify', () => {
 
 gulp.task('sass', () => {
 	console.log('sass reporting in');
-  return gulp.src('./src/styles/**/*.scss')
+  return gulp.src('./src/styles/*.scss')
     .pipe(sass('bela-style.css'))
     .pipe(gulp.dest('../IDE/public/styles'));
     console.log('a sphincter says what');
