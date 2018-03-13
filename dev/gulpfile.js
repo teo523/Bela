@@ -21,7 +21,7 @@ var user = 'root';
 var pass = 'a';
 var remotePath = '/root/Bela/IDE/';
 
-gulp.task('commit', ['browserify', 'scope-browserify']);
+gulp.task('commit', ['browserify', 'scope-browserify', 'sass']);
 
 gulp.task('default', ['commit', 'killnode', 'upload', 'restartnode', 'watch']);
 
@@ -128,8 +128,6 @@ gulp.task('scope-browserify', () => {
         .pipe(gulp.dest('../IDE/public/scope/js/'));
 });
 
-// Sass task. Get to the first log point, seems to execute without error, never hits the second and there's no output:
-
 gulp.task('sass', function () {
 	return gulp.src('./sass/**/*.scss')
 		.pipe(sourcemaps.init())
@@ -137,18 +135,6 @@ gulp.task('sass', function () {
 		.pipe(sourcemaps.write())
 		.pipe(gulp.dest('../IDE/public/styles/'));
 });
-
-// gulp.task('sass', () => {
-// 	console.log('sass reporting in');
-//   return gulp
-//   	.src('./src/styles/*.scss')
-//     .pipe(sass('bela-style.css'))
-//     	.on('error', function() {
-//     		console.log("WHOOPS");
-//     	})
-//     .pipe(gulp.dest('../IDE/public/styles'));
-//     console.log("sass done");
-// });
 
 function startNode(callback){
 	var ssh = spawn('ssh', [user+'@'+host, 'cd', remotePath+';', 'node', '/root/Bela/IDE/index.js']);
