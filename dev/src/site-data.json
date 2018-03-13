@@ -1,11 +1,82 @@
-[
-	{
-		"popup":
-			{
-				"name": "save-file",
-				"title-text": "So it looks like you want to save a project!",
-				"sub-text": "Save it here.",
-				"buttons":	["submit", "cancel"]
-			}
-	}
-]
+{
+  "popups": {
+    "exampleChanged": {
+      "title": "Save changes to example project?",
+      "text": "You've made changes to an example project. You can discard these changes, or save them as a new project.",
+    },
+    "deleteProject": {
+      "title": "Delete project?",
+      "text": "Do you really want to delete this project and all associated files? This action cannot be undone."
+    },
+    "save_as": {
+      "title": "Save project as ...",
+      "text": "Enter a name for this project."
+    },
+    "create_project": {
+      "title": "Create a new project",
+      "text": "Choose what kind of project you would like to create:",
+      "text_2": "Enter the name of your new project:"
+    },
+    "create_file": {
+      "title": "Create a new file",
+      "text": "Enter the name of the new file, with its extension (only files with extensions .cpp, .c or .S will be compiled)."
+    },
+    "delete_file": {
+      "title": "Delete this file",
+      "text": "Do you want to delete the file you're currently working on? (This can't be undone.)"
+    },
+    "rename_file": {
+      "title": "Rename this file",
+      "text": "Enter the new name of this file, with its extension (only files with extensions .cpp, .c or .S will be compiled)."
+    },
+    "restore_defaults": {
+      "title": "Restore default settings?",
+      "text": "This will restore the Bela default settings, overwriting all your changes. This can't be undone!"
+    },
+    "about_bela": {
+      "title": "About Bela",
+      "text": "Bela is an open source project, and is a product of the Augmented Instruments Laboratory at Queen Mary University of London, and Augmented Instruments Ltd. For more information, visit http://bela.io"
+    },
+    "shutdown": {
+      "title": "Shut down Bela?",
+      "text": "Are you sure you wish to continue? Bela will shutdown gracefully, and the IDE will disconnect."
+    },
+    "update": {
+      "title": "Update Bela",
+      "text": "If you've downloaded the update as a zip file, upload it here. (Otherwise, visit bela.io/update to download the latest version.)"
+    }
+  },
+  "buttons": {
+    "cancel": {
+      "class_name": "cancel",
+      "button_text": "Cancel"
+    },
+    "ok": {
+      "class_name": "ok",
+      "button_text": "OK"
+    },
+    "continue": {
+      "class_name": "ok",
+      "button_text": "Continue"
+    },
+    "close": {
+      "class_name": "cancel",
+      "button_text": "close"
+    },
+    "save_changes": {
+      "class_name": "save-project",
+      "button_text": "Save"
+    },
+    "confirm_delete": {
+      "class_name": "confirm",
+      "button_text": "Yes I'm sure!"
+    },
+    "create_file": {
+      "class_name": "create",
+      "button_text": "Create file"
+    }
+  }
+
+
+
+}
