@@ -21,7 +21,7 @@ var user = 'root';
 var pass = 'a';
 var remotePath = '/root/Bela/IDE/';
 
-gulp.task('commit', ['browserify', 'scope-browserify', 'sass']);
+gulp.task('commit', ['browserify', 'scope-browserify']);
 
 gulp.task('default', ['commit', 'killnode', 'upload', 'restartnode', 'watch']);
 
@@ -37,8 +37,6 @@ gulp.task('watch', ['upload'], function(){
 	
 	// when the scope browser js changes, browserify it
 	gulp.watch(['./scope-src/**'], ['scope-browserify']);
-
-	gulp.watch(['./src/styles/**'], ['sass']);
 	
 	// when the less changes, compile it and stick it in public/css
 	// gulp.watch(['../IDE/public/less/**'], ['less']);
@@ -47,7 +45,8 @@ gulp.task('watch', ['upload'], function(){
 	gulp.watch(['../IDE/public/**', 
 		'!../IDE/public/js/bundle.js.map', 
 		'!../IDE/public/scope/js/bundle.js.map', 
-		'!../IDE/public/js/ace/**'
+		'!../IDE/public/js/ace/**',
+		'./src/styles/**'
 	], ['upload-no-kill']);
 	
 });
@@ -141,6 +140,7 @@ gulp.task('sass', () => {
     		console.log("WHOOPS");
     	})
     .pipe(gulp.dest('../IDE/public/styles'));
+    console.log("sass done");
 });
 
 function startNode(callback){
