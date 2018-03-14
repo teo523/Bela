@@ -5,6 +5,9 @@ var titleEl	= parent.find('h1');
 var subEl	= parent.find('p');
 var formEl	= parent.find('form');
 
+var jsonData = require('./site-data.json');
+
+
 var popup = {
 	
 	show(){
@@ -44,12 +47,17 @@ module.exports = popup;
 function example(cb, arg, delay, cancelCb){
 
 	// build the popup content
-	popup.title('Save your changes?');
-	popup.subtitle('You have made changes to an example project. If you continue, your changes will be lost. To keep your changes, click cancel and then Save As in the project manager tab');
+
+	// The text is included from an external JSON file for easy editing.
+	popup.title(jsonData.popups.exampleChanged.title);
+	popup.subtitle(jsonData.popups.exampleChanged.text);
+	// popup.subtitle('You have made changes to an example project. If you continue, your changes will be lost. To keep your changes, click cancel and then Save As in the project manager tab');
 	
 	var form = [];
-	form.push('<button type="submit" class="button popup-continue">Continue</button>');
-	form.push('<button type="button" class="button popup-cancel">Cancel</button>');
+
+	// Here we want to pull the class names and button text from the JSON file.
+	form.push('<button type="submit" class="button popup ' + jsonData.buttons.save_changes.class_name + '">' + jsonData.buttons.save_changes.button_text + '</button>');
+	form.push('<button type="button" class="button popup ' + jsonData.buttons.cancel.class_name + '">'+ jsonData.buttons.cancel.button_text + '</button>');
 	
 	popup.form.append(form.join('')).off('submit').on('submit', e => {
 		e.preventDefault();

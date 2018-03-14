@@ -1,6 +1,7 @@
 var View = require('./View');
 var popup = require('../popup');
 var sanitise = require('../utils').sanitise;
+var jsonData = require('../site-data.json');
 
 class ProjectView extends View {
 	
@@ -45,8 +46,8 @@ class ProjectView extends View {
 		}
 				
 		// build the popup content
-		popup.title('Creating a new project');
-		popup.subtitle('Choose what kind of project you would like to create, and enter the name of your new project');
+		popup.title(jsonData.popups.create_new.title);
+		popup.subtitle(jsonData.popups.create_new.text);
 		
 		var form = [];
 		form.push('<input id="popup-C" type="radio" name="project-type" data-type="C" checked>');

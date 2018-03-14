@@ -1,5 +1,6 @@
 var View = require('./View');
 var popup = require('../popup');
+var jsonData = require('../site-data.json');
 var sanitise = require('../utils').sanitise;
 
 var sourceIndeces = ['cpp', 'c', 'S'];
@@ -52,13 +53,13 @@ class FileView extends View {
 	newFile(func){
 	
 		// build the popup content
-		popup.title('Creating a new file');
-		popup.subtitle('Enter the name of the new file. Only files with extensions .cpp, .c or .S will be compiled.');
+		popup.title(jsonData.popups.create_file.title);
+		popup.subtitle(jsonData.popups.create_file.text);
 		
 		var form = [];
 		form.push('<input type="text" placeholder="Enter the file name">');
 		form.push('</br >');
-		form.push('<button type="submit" class="button popup-create">Create</button>');
+		form.push('<button type="submit" class="button popup' + jsonData.buttons.create.class_name + '">' + jsonData.buttons.create.button_text + '</button>');
 		form.push('<button type="button" class="button popup-cancel">Cancel</button>');
 		
 		popup.form.append(form.join('')).off('submit').on('submit', e => {
