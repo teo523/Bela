@@ -21,7 +21,7 @@ var user = 'root';
 var pass = 'a';
 var remotePath = '/root/Bela/IDE/';
 
-gulp.task('commit', ['browserify', 'scope-browserify']);
+gulp.task('commit', ['browserify', 'scope-browserify', 'sass']);
 
 gulp.task('default', ['commit', 'killnode', 'upload', 'restartnode', 'watch']);
 
@@ -38,15 +38,14 @@ gulp.task('watch', ['upload'], function(){
 	// when the scope browser js changes, browserify it
 	gulp.watch(['./scope-src/**'], ['scope-browserify']);
 	
-	// when the less changes, compile it and stick it in public/css
-	// gulp.watch(['../IDE/public/less/**'], ['less']);
+	// when the sass changes, compile it and stick it in public/styles
+	gulp.watch(['./sass/**'], ['sass']);
 	
 	// when the browser sources change, upload them without killing node
 	gulp.watch(['../IDE/public/**', 
 		'!../IDE/public/js/bundle.js.map', 
 		'!../IDE/public/scope/js/bundle.js.map', 
-		'!../IDE/public/js/ace/**',
-		'./src/styles/**'
+		'!../IDE/public/js/ace/**'
 	], ['upload-no-kill']);
 	
 });
@@ -129,18 +128,12 @@ gulp.task('scope-browserify', () => {
         .pipe(gulp.dest('../IDE/public/scope/js/'));
 });
 
-// Sass task. Get to the first log point, seems to execute without error, never hits the second and there's no output:
-
-gulp.task('sass', () => {
-	console.log('sass reporting in');
-  return gulp
-  	.src('./src/styles/*.scss')
-    .pipe(sass('bela-style.css'))
-    	.on('error', function() {
-    		console.log("WHOOPS");
-    	})
-    .pipe(gulp.dest('../IDE/public/styles'));
-    console.log("sass done");
+gulp.task('sass', function () {
+	return gulp.src('./sass/**/*.scss')
+		.pipe(sourcemaps.init())
+		.pipe(sass().on('error', sass.logError))
+		.pipe(sourcemaps.write())
+		.pipe(gulp.dest('../IDE/public/styles/'));
 });
 
 function startNode(callback){
