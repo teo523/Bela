@@ -1,16 +1,17 @@
 {
   "popups": {
-    "exampleChanged": {
+    "example_changed": {
       "title": "Save changes to example project?",
       "text": "You've made changes to an example project. You can discard these changes, or save them as a new project.",
     },
-    "deleteProject": {
+    "delete_project": {
       "title": "Delete project?",
-      "text": "Do you really want to delete this project and all associated files? This action cannot be undone."
+      "text": "Are you sure you really want to delete this project, including all associated files? This action cannot be undone."
     },
     "save_as": {
       "title": "Save project as ...",
-      "text": "Enter a name for this project."
+      "text": "Enter a name for this project.",
+      "input_text": "Your project name here"
     },
     "create_project": {
       "title": "Create a new project",
@@ -72,8 +73,16 @@
       "button_text": "Yes I'm sure!"
     },
     "create_file": {
-      "class_name": "create",
+      "class_name": "create-file",
       "button_text": "Create file"
+    },
+    "create_project": {
+      "class_name": "create-project",
+      "button_text": "Create project"
+    },
+    "save": {
+      "class_name": "save",
+      "button_text": "Save"
     }
   }
 

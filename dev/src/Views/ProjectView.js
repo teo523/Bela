@@ -46,8 +46,8 @@ class ProjectView extends View {
 		}
 				
 		// build the popup content
-		popup.title(jsonData.popups.create_new.title);
-		popup.subtitle(jsonData.popups.create_new.text);
+		popup.title(jsonData.popups.create_project.title);
+		popup.subtitle(jsonData.popups.create_project.text);
 		
 		var form = [];
 		form.push('<input id="popup-C" type="radio" name="project-type" data-type="C" checked>');
@@ -61,9 +61,13 @@ class ProjectView extends View {
 		form.push('</br>');
 		form.push('<input type="text" placeholder="Enter your project name">');
 		form.push('</br>');
-		form.push('<button type="submit" class="button popup-save">Create</button>');
-		form.push('<button type="button" class="button popup-cancel">Cancel</button>');
+
+		// Buttons:
+		form.push('<button type="submit" class="button popup ' + jsonData.buttons.create_project.class_name + '">' + jsonData.buttons.create_project.button_text + '</button>');
+		form.push('<button type="button" class="button popup ' + jsonData.buttons.cancel.class_name + '">' + jsonData.buttons.cancel.button_text + '</button>');
 		
+		// popup.subtitle(jsonData.popups.create_project.text);
+
 		popup.form.append(form.join('')).off('submit').on('submit', e => {
 			e.preventDefault();
 			this.emit('message', 'project-event', {
@@ -73,8 +77,9 @@ class ProjectView extends View {
 			});
 			popup.hide();
 		});
-		
-		popup.find('.popup-cancel').on('click', popup.hide );
+
+		// Hide popup when cancel button is clicked:
+		popup.find('.' + jsonData.buttons.cancel.class_name).on('click', popup.hide );
 		
 		popup.show();
 
@@ -82,14 +87,14 @@ class ProjectView extends View {
 	saveAs(func){
 	
 		// build the popup content
-		popup.title('Saving project');
-		popup.subtitle('Enter the name of your project');
+		popup.title(jsonData.popups.save_as.title);
+		popup.subtitle(jsonData.popups.save_as.text);
 		
 		var form = [];
-		form.push('<input type="text" placeholder="Enter the new project name">');
+		form.push('<input type="text" placeholder="' + jsonData.popups.save_as.input_text + '">');
 		form.push('</br >');
-		form.push('<button type="submit" class="button popup-save">Save</button>');
-		form.push('<button type="button" class="button popup-cancel">Cancel</button>');
+		form.push('<button type="submit" class="button popup ' + jsonData.buttons.save.class_name + '">' + jsonData.buttons.save.button_text + '</button>');
+		form.push('<button type="button" class="button popup ' + jsonData.buttons.cancel.class_name + '">' + jsonData.buttons.cancel.button_text + '</button>');
 		
 		popup.form.append(form.join('')).off('submit').on('submit', e => {
 			e.preventDefault();
@@ -97,7 +102,8 @@ class ProjectView extends View {
 			popup.hide();
 		});
 		
-		popup.find('.popup-cancel').on('click', popup.hide );
+		// Hide popup when cencel button is clicked: 
+		popup.find('.' + jsonData.buttons.cancel.class_name).on('click', popup.hide );
 		
 		popup.show();
 
@@ -105,12 +111,12 @@ class ProjectView extends View {
 	deleteProject(func){
 
 		// build the popup content
-		popup.title('Deleting project');
-		popup.subtitle('Are you sure you wish to delete this project? This cannot be undone!');
+		popup.title(jsonData.popups.delete_project.title);
+		popup.subtitle(jsonData.popups.delete_project.text);
 		
 		var form = [];
-		form.push('<button type="submit" class="button popup-delete">Delete</button>');
-		form.push('<button type="button" class="button popup-cancel">Cancel</button>');
+		form.push('<button type="submit" class="button popup ' + jsonData.buttons.confirm_delete.class_name + '">' + jsonData.buttons.confirm_delete.button_text + '</button>');
+		form.push('<button type="button" class="button popup ' + jsonData.buttons.cancel.class_name + '">' + jsonData.buttons.cancel.button_text + '</button>');
 		
 		popup.form.append(form.join('')).off('submit').on('submit', e => {
 			e.preventDefault();
@@ -118,11 +124,11 @@ class ProjectView extends View {
 			popup.hide();
 		});
 		
-		popup.find('.popup-cancel').on('click', popup.hide );
+		popup.find('.'+jsonData.buttons.cancel.class_name).on('click', popup.hide );
 		
 		popup.show();
 		
-		popup.find('.popup-delete').trigger('focus');
+		popup.find('.'+jsonData.buttons.confirm_delete.class_name).trigger('focus');
 		
 	}
 	cleanProject(func){
