@@ -277,15 +277,15 @@ class FileView extends View {
 			uploadingFile = true;
 
 			// build the popup content
-			popup.title('Overwriting file');
-			popup.subtitle('The file '+file.name+' already exists in this project. Would you like to overwrite it?');
+			popup.title(jsonData.popups.file_overwrite.title);
+			popup.subtitle(jsonData.popups.file_overwrite.text);
 		
 			var form = [];
 			form.push('<input id="popup-remember-upload" type="checkbox">');
-			form.push('<label for="popup-remember-upload">don\'t ask me again this session</label>')
+			form.push('<label for="popup-remember-upload">' + jsonData.popups.file_overwrite.subtext + '</label>')
 			form.push('</br >');
-			form.push('<button type="submit" class="button popup-upload">Overwrite</button>');
-			form.push('<button type="button" class="button popup-cancel">Cancel</button>');
+			form.push('<button type="submit" class="button popup ' + jsonData.buttons.overwrite.class_name + '">' + jsonData.buttons.overwrite.button_text + '</button>');
+			form.push('<button type="button" class="button popup ' + jsonData.buttons.cancel.class_name + '">' + jsonData.buttons.cancel.button_text + '</button>');
 		
 			popup.form.append(form.join('')).off('submit').on('submit', e => {
 				e.preventDefault();
@@ -301,7 +301,7 @@ class FileView extends View {
 				}
 			});
 		
-			popup.find('.popup-cancel').on('click', () => {
+			popup.find('.' + jsonData.buttons.cancel.class_name).on('click', () => {
 				if (popup.find('input[type=checkbox]').is(':checked')){
 					askForOverwrite = false;
 					overwriteAction = 'reject';
@@ -314,7 +314,7 @@ class FileView extends View {
 		
 			popup.show();
 			
-			popup.find('.popup-cancel').focus();
+			popup.find('.' + jsonData.buttons.cancel.class_name).focus();
 			
 		} else if (fileExists && !askForOverwrite){
 		
