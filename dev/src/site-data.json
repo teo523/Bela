@@ -47,6 +47,11 @@
     "update": {
       "title": "Update Bela",
       "text": "If you've downloaded the update as a zip file, upload it here. (Otherwise, visit bela.io/update to download the latest version.)"
+    },
+    "file_overwrite": {
+      "title": "Overwrite file?",
+      "text": "This file already exists in the current project. Would you like to overwrite it?",
+      "subtext": "Don't ask me again this session"
     }
   },
   "buttons": {
@@ -89,6 +94,10 @@
     "rename": {
       "class_name": "rename",
       "button_text": "Rename"
+    },
+    "overwrite": {
+      "class_name": "overwrite",
+      "button_text": "Overwrite"
     }
   }
 
