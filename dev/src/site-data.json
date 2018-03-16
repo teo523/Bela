@@ -20,7 +20,8 @@
     },
     "create_file": {
       "title": "Create a new file",
-      "text": "Enter the name of the new file, with its extension (only files with extensions .cpp, .c or .S will be compiled)."
+      "text": "Enter the name of the new file, with its extension (only files with extensions .cpp, .c or .S will be compiled).",
+      "input_text": "Enter the file name"
     },
     "delete_file": {
       "title": "Delete this file",
@@ -28,7 +29,8 @@
     },
     "rename_file": {
       "title": "Rename this file",
-      "text": "Enter the new name of this file, with its extension (only files with extensions .cpp, .c or .S will be compiled)."
+      "text": "Enter the new name of this file, with its extension (only files with extensions .cpp, .c or .S will be compiled).",
+      "input_text": "Enter the new file name"
     },
     "restore_defaults": {
       "title": "Restore default settings?",
@@ -83,6 +85,10 @@
     "save": {
       "class_name": "save",
       "button_text": "Save"
+    },
+    "rename": {
+      "class_name": "rename",
+      "button_text": "Rename"
     }
   }
 
