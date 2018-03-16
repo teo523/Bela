@@ -98,6 +98,10 @@
     "overwrite": {
       "class_name": "overwrite",
       "button_text": "Overwrite"
+    },
+    "update": {
+      "class_name": "update",
+      "button_text": "Update Bela"
     }
   }
 

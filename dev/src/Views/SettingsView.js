@@ -1,5 +1,6 @@
 var View = require('./View');
 var popup = require('../popup');
+var jsonData = require('../site-data.json');
 
 var inputChangedTimeout;
 
@@ -80,12 +81,13 @@ class SettingsView extends View {
 	restoreDefaultCLArgs(func){
 		
 		// build the popup content
-		popup.title('Restoring default project settings');
-		popup.subtitle('Are you sure you wish to continue? Your current project settings will be lost!');
+		popup.title(jsonData.popups.restore_defaults.title);
+
+		popup.subtitle(jsonData.popups.restore_defaults.text);
 		
 		var form = [];
-		form.push('<button type="submit" class="button popup-continue">Continue</button>');
-		form.push('<button type="button" class="button popup-cancel">Cancel</button>');
+		form.push('<button type="submit" class="button popup ' + jsonData.buttons.continue.class_name + '">' + jsonData.buttons.continue.button_text + '</button>');
+		form.push('<button type="button" class="button popup ' + jsonData.buttons.cancel.class_name + '">' + jsonData.buttons.cancel.button_text + '</button>');
 		
 		popup.form.append(form.join('')).off('submit').on('submit', e => {
 			e.preventDefault();
@@ -93,11 +95,12 @@ class SettingsView extends View {
 			popup.hide();
 		});
 		
-		popup.find('.popup-cancel').on('click', popup.hide );
+		// Hide popup when cancel button is clicked:
+		popup.find('.' + jsonData.buttons.cancel.class_name).on('click', popup.hide );
 		
 		popup.show();
 		
-		popup.find('.popup-continue').trigger('focus');
+		popup.find('.' + jsonData.buttons.continue.class_name).trigger('focus');
 
 	}
 	
@@ -131,12 +134,12 @@ class SettingsView extends View {
 	shutdownBBB(){
 	
 		// build the popup content
-		popup.title('Shutting down Bela');
-		popup.subtitle('Are you sure you wish to continue? The BeagleBone will shutdown gracefully, and the IDE will disconnect.');
+		popup.title(jsonData.popups.shutdown.title);
+		popup.subtitle(jsonData.popups.shutdown.text);
 		
 		var form = [];
-		form.push('<button type="submit" class="button popup-continue">Continue</button>');
-		form.push('<button type="button" class="button popup-cancel">Cancel</button>');
+		form.push('<button type="submit" class="button popup ' + jsonData.buttons.continue.class_name + '">' + jsonData.buttons.continue.button_text + '</button>');
+		form.push('<button type="button" class="button popup ' + jsonData.buttons.cancel.class_name + '">' + jsonData.buttons.cancel.button_text + '</button>');
 		
 		popup.form.append(form.join('')).off('submit').on('submit', e => {
 			e.preventDefault();
@@ -144,20 +147,20 @@ class SettingsView extends View {
 			popup.hide();
 		});
 		
-		popup.find('.popup-cancel').on('click', popup.hide );
+		popup.find('.' + jsonData.buttons.cancel.class_name).on('click', popup.hide );
 		
 		popup.show();
 		
-		popup.find('.popup-continue').trigger('focus');
+		popup.find('.' + jsonData.buttons.continue.class_name).trigger('focus');
 	
 	}
 	aboutPopup(){
 		
 		// build the popup content
-		popup.title('About Bela');
-		popup.subtitle('Bela is an open source project, and is a product of the Augmented Instruments Laboratory at Queen Mary University of London, and Augmented Instruments Ltd. For more information, visit http://bela.io');
+		popup.title(jsonData.popups.about_bela.title);
+		popup.subtitle(jsonData.popups.about_bela.text);
 		var form = [];
-		form.push('<button type="submit" class="button popup-continue">Close</button>');
+		form.push('<button type="submit" class="button popup ' + jsonData.buttons.ok.class_name + '">' + jsonData.buttons.ok.button_text + '</button>');
 		
 		popup.form.append(form.join('')).off('submit').on('submit', e => {
 			e.preventDefault();
@@ -166,20 +169,20 @@ class SettingsView extends View {
 				
 		popup.show();
 		
-		popup.find('.popup-continue').trigger('focus');
+		popup.find('.' + jsonData.buttons.ok.class_name).trigger('focus');
 		
 	}
 	updateBela(){
 	
 		// build the popup content
-		popup.title('Updating Bela');
-		popup.subtitle('Please select the update zip archive');
+		popup.title(jsonData.popups.update.title);
+		popup.subtitle(jsonData.popups.update.text);
 		
 		var form = [];
 		form.push('<input id="popup-update-file" type="file">');
 		form.push('</br>');
-		form.push('<button type="submit" class="button popup-upload">Upload</button>');
-		form.push('<button type="button" class="button popup-cancel">Cancel</button>');
+		form.push('<button type="submit" class="button popup ' + jsonData.buttons.update.class_name + '">' + jsonData.buttons.update.button_text + '</button>');
+		form.push('<button type="button" class="button popup ' + jsonData.buttons.cancel.class_name + '">' + jsonData.buttons.cancel.button_text + '</button>');
 
 		/*popup.form.prop({
 			action	: 'updates',
@@ -219,7 +222,7 @@ class SettingsView extends View {
 			
 		});
 		
-		popup.find('.popup-cancel').on('click', popup.hide );
+		popup.find('.' + jsonData.buttons.cancel.class_name).on('click', popup.hide );
 				
 		popup.show();
 		
