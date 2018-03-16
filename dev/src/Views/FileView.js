@@ -57,18 +57,19 @@ class FileView extends View {
 		popup.subtitle(jsonData.popups.create_file.text);
 		
 		var form = [];
-		form.push('<input type="text" placeholder="Enter the file name">');
+		form.push('<input type="text" placeholder="' + jsonData.popups.create_file.input_text + '">');
 		form.push('</br >');
-		form.push('<button type="submit" class="button popup' + jsonData.buttons.create.class_name + '">' + jsonData.buttons.create.button_text + '</button>');
-		form.push('<button type="button" class="button popup-cancel">Cancel</button>');
+		form.push('<button type="submit" class="button popup ' + jsonData.buttons.create_file.class_name + '">' + jsonData.buttons.create_file.button_text + '</button>');
+		form.push('<button type="button" class="button popup ' + jsonData.buttons.cancel.class_name + '">' + jsonData.buttons.cancel.button_text + '</button>');
 		
 		popup.form.append(form.join('')).off('submit').on('submit', e => {
 			e.preventDefault();
 			this.emit('message', 'project-event', {func, newFile: sanitise(popup.find('input[type=text]').val())});
 			popup.hide();
 		});
-		
-		popup.find('.popup-cancel').on('click', popup.hide );
+
+		// hide popup on clicking canceL;
+		popup.find('.' + jsonData.buttons.cancel.class_name).on('click', popup.hide );
 		
 		popup.show();
 
@@ -79,14 +80,14 @@ class FileView extends View {
 	renameFile(func){
 		
 		// build the popup content
-		popup.title('Renaming this file');
-		popup.subtitle('Enter the new name of the file. Only files with extensions .cpp, .c or .S will be compiled.');
+		popup.title(jsonData.popups.rename_file.title);
+		popup.subtitle(jsonData.popups.rename_file.text);
 		
 		var form = [];
-		form.push('<input type="text" placeholder="Enter the new file name">');
+		form.push('<input type="text" placeholder="' + jsonData.popups.rename_file.input_text + '">');
 		form.push('</br >');
-		form.push('<button type="submit" class="button popup-rename">Rename</button>');
-		form.push('<button type="button" class="button popup-cancel">Cancel</button>');
+		form.push('<button type="submit" class="button popup ' + jsonData.buttons.rename.class_name + '">' + jsonData.buttons.rename.button_text + '</button>');
+		form.push('<button type="button" class="button popup ' + jsonData.buttons.cancel.class_name + '">' + jsonData.buttons.cancel.button_text + '</button>');
 		
 		popup.form.append(form.join('')).off('submit').on('submit', e => {
 			e.preventDefault();
@@ -94,7 +95,9 @@ class FileView extends View {
 			popup.hide();
 		});
 		
-		popup.find('.popup-cancel').on('click', popup.hide );
+
+		// Hide when cancel button is clicked
+		popup.find('.' + jsonData.buttons.cancel.class_name).on('click', popup.hide );
 		
 		popup.show();
 
@@ -102,12 +105,12 @@ class FileView extends View {
 	deleteFile(func){
 	
 		// build the popup content
-		popup.title('Deleting file');
-		popup.subtitle('Are you sure you wish to delete this file? This cannot be undone!');
+		popup.title(jsonData.popups.delete_file.title);
+		popup.subtitle(jsonData.popups.delete_file.text);
 		
 		var form = [];
-		form.push('<button type="submit" class="button popup-delete">Delete</button>');
-		form.push('<button type="button" class="button popup-cancel">Cancel</button>');
+		form.push('<button type="submit" class="button popup ' + jsonData.buttons.confirm_delete.class_name + '">' + jsonData.buttons.confirm_delete.button_text + '</button>');
+		form.push('<button type="button" class="button popup ' + jsonData.buttons.cancel.class_name + '">' + jsonData.buttons.cancel.button_text + '</button>');
 		
 		popup.form.append(form.join('')).off('submit').on('submit', e => {
 			e.preventDefault();
@@ -115,11 +118,13 @@ class FileView extends View {
 			popup.hide();
 		});
 		
-		popup.find('.popup-cancel').on('click', popup.hide );
+		// Hide popup when cancel button is clicked:
+		popup.find('.' + jsonData.buttons.cancel.class_name).on('click', popup.hide );
 		
 		popup.show();
 		
-		popup.find('.popup-delete').trigger('focus');
+		// When confirm delete button is clicked, return focus:
+		popup.find('.' + jsonData.buttons.confirm_delete.class_name).trigger('focus');
 		
 	}
 	openFile(e){
