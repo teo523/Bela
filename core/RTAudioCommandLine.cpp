@@ -12,6 +12,8 @@
 #include <sstream>
 #include <getopt.h>
 #include "../include/Bela.h"
+#include <xenomai/init.h>
+extern int gXenomaiInited;
 
 #define OPT_PRU_FILE 1000
 #define OPT_PGA_GAIN_LEFT 1001
@@ -22,6 +24,7 @@
 #define OPT_DETECT_UNDERRUNS 1006
 #define OPT_UNIFORM_SAMPLE_RATE 1007
 #define OPT_HIGH_PERFORMANCE_MODE 1008
+#define OPT_XENO 1009
 
 
 enum {
@@ -58,6 +61,7 @@ struct option gDefaultLongOptions[] =
 	{"disable-cape-button-monitoring", 0, NULL, OPT_DISABLE_CAPE_BUTTON},
 	{"high-performance-mode", 0, NULL, OPT_HIGH_PERFORMANCE_MODE},
 	{"uniform-sample-rate", 0, NULL, OPT_UNIFORM_SAMPLE_RATE},
+	{"xeno", 0, NULL, OPT_XENO},
 	{NULL, 0, NULL, 0}
 };
 
@@ -187,6 +191,8 @@ int Bela_getopt_long(int argc, char *argv[], const char *customShortOptions, con
 		}
 	}
 
+	int argcx;
+	char* const* argvx;
 	while(1) {
 		if ((c = getopt_long(argc, argv, totalShortOptions, totalLongOptions, NULL)) < 0)
 			return c;
@@ -308,6 +314,16 @@ int Bela_getopt_long(int argc, char *argv[], const char *customShortOptions, con
 			settings->uniformSampleRate = 1;
 			printf("Uniform sample rate\n");
 			break;
+		case OPT_XENO:
+			// everything after --xeno is passed to xenomai_init
+			argcx = argc - optind + 1;
+			argvx = argv + optind - 1;
+			optind = 1;
+			xenomai_init(&argcx, &argvx);
+			gXenomaiInited = 1;
+			// stop parsing options: return a negative value
+			return -1;
+			break;
 		case '?':
 		default:
 			return c;
@@ -344,6 +360,7 @@ void Bela_usage()
 	std::cerr << "   --high-performance-mode             Gives more CPU to the Bela process. The system may become unresponsive and you will have to use the button on the Bela cape when you want to stop it.\n";
 	std::cerr << "   --uniform-sample-rate               Internally resample the analog channels so that they match the audio sample rate\n";
 	std::cerr << "   --verbose [-v]:                     Enable verbose logging information\n";
+	std::cerr << "   --xeno args:                        Pass arguments to the Xenomai backend. All Bela arguments after --xeno will be ignored\n";
 }
 
 // ---- internal functions ----
