@@ -7,7 +7,9 @@
 */
 class DataFifo
 {
-	DataFifo();
+
+public:
+	DataFifo(const std::string& name, size_t queueSize, bool blocking);
 	~DataFifo();
 	/**
 	* Set queue

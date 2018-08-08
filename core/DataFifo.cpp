@@ -1,11 +1,21 @@
 #include <DataFifo.h>
+	
+DataFifo::DataFifo(const std::string& name, size_t queueSize, bool blocking)
+{
+	setup(name, queueSize, blocking);	
+}
+
+DataFifo::~DataFifo()
+{
+	cleanup();
+}
 
 int DataFifo::setup(const std::string& name, size_t queueSize, bool blocking)
 {
 	struct mq_attr attr;
 	attr.mq_maxmsg = 100;
 	attr.mq_msgsize = queueSize;
-	// Check if queue alreadhy exists
+	// Check if queue already exists
 	queue = __wrap_mq_open(name.c_str(), O_RDWR);
 	if(queue != -1)
 	{
