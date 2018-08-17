@@ -1,8 +1,7 @@
 #include <DataFifo.h>
 	
-DataFifo::DataFifo(const std::string& name, size_t queueSize, bool blocking)
+DataFifo::DataFifo()
 {
-	setup(name, queueSize, blocking);	
 }
 
 DataFifo::~DataFifo()

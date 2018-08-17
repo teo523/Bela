@@ -9,7 +9,7 @@ class DataFifo
 {
 
 public:
-	DataFifo(const std::string& name, size_t queueSize, bool blocking);
+	DataFifo();
 	~DataFifo();
 	/**
 	* Set queue
@@ -35,7 +35,7 @@ public:
 	/**
 	* Receive buffer from queue
 	*
-	* @param buf buffer containing data to send
+	* @param buf buffer to pass the data to
 	* @param size size of buffer
 	*
 	* @return size of message on success, `-errno` otherwise
