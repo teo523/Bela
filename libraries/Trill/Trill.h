@@ -35,6 +35,7 @@ class Trill : public I2c
 
 		enum {
 			kNumSensorsBar = 26,
+			kNumSensorsHex = 30,
 			kNumSensors = 30
 		};
 
@@ -51,7 +52,7 @@ class Trill : public I2c
 		int rawData[kNumSensors];
 
 		enum Modes {
-			NORMAL = 0,
+			CENTROID = 0,
 			RAW = 1,
 			BASELINE = 2,
 			DIFF = 3
@@ -59,14 +60,18 @@ class Trill : public I2c
 
 		enum Devices {
 			NONE = 0,
-			ONED = 1,
-			TWOD = 2
+			BAR = 1,
+			SQUARE = 2,
+			CRAFT = 3,
+			RING = 4,
+			HEX = 5, 
+			FLEX = 6
 		};
 
 		Trill();
 		~Trill();
 		Trill(int i2c_bus, int i2c_address, int mode);
-		int setup(int i2c_bus = 1, int i2c_address = 0x18, int mode = NORMAL);
+		int setup(int i2c_bus = 1, int i2c_address = 0x18, int mode = CENTROID);
 		int setup(int i2c_bus, int i2c_address, int mode, int threshold, int prescaler);
 		void cleanup();
 
