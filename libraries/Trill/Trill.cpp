@@ -263,7 +263,7 @@ int Trill::readLocations() {
 		prepareForDataRead();
 
 	uint8_t bytesToRead = kNormalLengthDefault;
-	if(device_type_ == SQUARE)
+	if(device_type_ == SQUARE || device_type_ == HEX)
 		bytesToRead = kNormalLength2D;
 	int bytesRead = ::read(i2C_file, dataBuffer, kNormalLengthDefault);
 	if (bytesRead != kNormalLengthDefault)
@@ -282,7 +282,7 @@ int Trill::readLocations() {
 	}
 	num_touches_ = locations;
 
-	if(device_type_ == SQUARE)
+	if(device_type_ == SQUARE || device_type_ == HEX)
 	{
 		// Look for the number of horizontal touches in 2D sliders
 		// which might be different from number of vertical touches
@@ -310,7 +310,7 @@ int Trill::numberOfTouches()
 // Number of horizontal touches for Trill 2D
 int Trill::numberOfHorizontalTouches()
 {
-	if(mode_ != CENTROID || device_type_ != SQUARE)
+	if(mode_ != CENTROID || device_type_ != SQUARE) || device_type_ != HEX
 		return 0;
 
 	// Upper 4 bits hold number of horizontal touches
@@ -352,7 +352,7 @@ int Trill::touchSize(uint8_t touch_num)
 
 int Trill::touchHorizontalLocation(uint8_t touch_num)
 {
-	if(mode_ != CENTROID || device_type_ != SQUARE)
+	if(mode_ != CENTROID || device_type_ != SQUARE || device_type_ != HEX)
 		return -1;
 	if(touch_num >= MAX_TOUCH_1D_OR_2D)
 		return -1;
@@ -365,7 +365,7 @@ int Trill::touchHorizontalLocation(uint8_t touch_num)
 
 int Trill::touchHorizontalSize(uint8_t touch_num)
 {
-	if(mode_ != CENTROID || device_type_ != SQUARE)
+	if(mode_ != CENTROID || device_type_ != SQUARE || device_type_ != HEX)
 		return -1;
 	if(touch_num >= MAX_TOUCH_1D_OR_2D)
 		return -1;
