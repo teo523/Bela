@@ -1,8 +1,9 @@
 #include <libraries/Trill/Trill.h>
 
-#define MAX_TOUCH_1D_OR_2D ((device_type_ == SQUARE ? kMaxTouchNum2D : kMaxTouchNum1D))
+#define MAX_TOUCH_1D_OR_2D (((device_type_ == SQUARE || device_type_ == HEX) ? kMaxTouchNum2D : kMaxTouchNum1D))
 #define NUM_SENSORS ((device_type_ == BAR ? kNumSensorsBar \
 			: device_type_ == HEX ? kNumSensorsHex \
+			: device_type_ == RING ? kNumSensorsRing \
 			: kNumSensors))
 Trill::Trill(){}
 
