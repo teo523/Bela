@@ -3,5 +3,6 @@
   "simple",
   "clock",
   "mouse-track",
-  "graph"
+  "sequencer",
+  "Instance-mode"
 ]
