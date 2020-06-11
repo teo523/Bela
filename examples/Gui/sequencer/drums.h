@@ -16,16 +16,23 @@
 #define _DRUMS_H
 
 #define NUMBER_OF_DRUMS 8
-#define NUMBER_OF_PATTERNS 6
-#define FILL_PATTERN 5
+#define PATTERN_LENGTH 8
+#define NUMBER_OF_READPOINTERS 16
 
 /* Start playing a particular drum sound */
 void startPlayingDrum(int drumIndex);
 
 /* Start playing the next event in the pattern */
-void startNextEvent();
+void startNextBeat();
 
-/* Returns whether the given event contains the given drum sound */
 int eventContainsDrum(int event, int drum);
+
+void cleanupDrums();
+
+int initDrums();
+
+void updatePattern();
+
+
 
 #endif /* _DRUMS_H */

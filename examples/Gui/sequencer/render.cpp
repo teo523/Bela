@@ -1,21 +1,36 @@
 /*
- * assignment2_drums
- * ECS7012 Music and Audio Programming
- *
- * Second assignment, to create a sequencer-based
- * drum machine which plays sampled drum sounds in loops.
- *
- * This code runs on the Bela embedded audio platform (bela.io).
- *
- * Andrew McPherson, Becky Stewart and Victor Zappi
- * 2015-2020
- */
+ ____  _____ _        _
+| __ )| ____| |      / \
+|  _ \|  _| | |     / _ \
+| |_) | |___| |___ / ___ \
+|____/|_____|_____/_/   \_\
+http://bela.io
+\example Gui/sequencer
+Make your own drum patterns with Bela
+============================
+This project uses Bela GUI library to build a drum sample sequencer, and it is a good example of sending data back anf forth
+between Bela (render.cpp) and the GUI (sketch.js). The GUI displays an 8x8 matrix of rectangles, in which each column
+is a beat and each row will correspond to a speceific WAV sound that is loaded to the project and then stored in a buffer. .
+The user can activate and deactivate the rectangles by clicking on them. For each beat, Bela will receive from 
+the GUI the sounds of that column (beat) that are active, and it will play them. At the same time, Bela will send 
+to the GUI the beat update. 
+
+HOW TO READ SEVERAL SOUNDS SIMULTANEOUSLY
+=========================================
+Note that for each beat, we can have eight different sounds playing simultaneously (even more if a sound is still playing
+from the previous beat!) so we need multiple readers reading multiple buffers at the same time.
+An easy way to achieve this is to generate a series of read pointers (i.e., an array of ints where each int will indicate 
+in which position of the file sound we should read). 
+When a sound starts playing, we will assign to that buffer a new read pointer that will tell us in which position of the 
+buffer we are reading. For example, let's say sound number 5 (i.e. gDrumSampleBuffers[4]) starts playing when no other sound 
+is playing. Then, we will assign the first read pointer available to that buffer. As no other sound is playing, 
+then gReadPointers[0] will keep track of where in the buffer we are reading. Aditionally, we need an array to store the fact 
+that gReadPointers[0] corresponds to gDrumSampleBuffers[4]. Thus, the array gDrumBufferForReadPointer[] will indicate this. 
+This means that gDrumBufferForReadPointer[0]=4;
+
+*/
+
 #include <iostream>
-#include <cstdlib>
-#include <cstring>
-#include <libgen.h>
-#include <signal.h>
-#include <getopt.h>
 #include <libraries/sndfile/sndfile.h>
 #include <libraries/Gui/Gui.h>
 #include <Bela.h>
@@ -26,140 +41,207 @@ using namespace std;
 
 
 
-
+//Create a new GUI object
 Gui myGui;
 
-/* Variables which are given to you: */
-
-/* Drum samples are pre-loaded in these buffers. Length of each
- * buffer is given in gDrumSampleBufferLengths.
- */
+//sound buffers
 float *gDrumSampleBuffers[NUMBER_OF_DRUMS];
+//array for storing the length of each buffer
 int gDrumSampleBufferLengths[NUMBER_OF_DRUMS];
 
-			/* Whether we should play or not. Implement this in Step 4b. */
+//this array tells us which readpointer points to which buffer. 
+int gDrumBufferForReadPointer[NUMBER_OF_READPOINTERS];
+//the actual read pointers
+int gReadPointers[NUMBER_OF_READPOINTERS];
+//array to store the pattern to be played (i.e, which drums to be played on each beat)
+//For example, gPatterns = [1,0,1,0,0,0,0,0] means that in that beat, sounds 0 and 2 will be played simoultaneously
+int gPattern[PATTERN_LENGTH];
+int gPatternLength = PATTERN_LENGTH;
 
-
-int pattern2[8]={};
-int gCounter = 0;
-int gBeats = 0;
-int gReadPointers[16];
-int playedDrums[16];
-int gDrumBufferForReadPointer[16] = {0};
-
-void updatePatterns();
-
-int gButtonPressed = 1;
-int gAccelState = 0;
-
-/* Patterns indicate which drum(s) should play on which beat.
- * Each element of gPatterns is an array, whose length is given
- * by gPatternLengths.
- */
-int *gPatterns[NUMBER_OF_PATTERNS];
-int gPatternLengths[NUMBER_OF_PATTERNS];
-
-/* These variables indicate which pattern we're playing, and
- * where within the pattern we currently are. Used in Step 4c.
- */
-int gCurrentPattern = 0;
-int gCurrentIndexInPattern = 0;
-
-/* This variable holds the interval between events in **milliseconds**
- * To use it (Step 4a), you will need to work out how many samples
- * it corresponds to.
- */
+//time interval between each beat, in millliseconds. As the user move the (speed) slider in the GUI, then it will send 
+//a new value to be stored in this variable.
 int gEventIntervalMilliseconds = 150;
 
-/* This variable indicates whether samples should be triggered or
- * not. It is used in Step 4b, and should be set in gpio.cpp.
- */
-int gIsPlaying = 1;
+//gCounter will count how many frames have ellapsed since the begginning of the current beat, and it will be reset 
+//when moving to the next beat.
+//Then, it will reset every audioSampleRate * gEventIntervalMilliseconds /1000
+int gCounter = 0;
 
-/* This indicates whether we should play the samples backwards.
- */
-int gPlaysBackwards = 0;
+//variable that keeps track on which of the 8 beats of the bar are we (from 0 to 7)
+int gCurrentBeat = 0;
 
-/* For bonus step only: these variables help implement a fill
- * (temporary pattern) which is triggered by tapping the board.
- */
-int gShouldPlayFill = 0;
-int gPreviousPattern = 0;
-
-/* TODO: Declare any further global variables you need here */
-
-// setup() is called once before the audio rendering starts.
-// Use it to perform any initialisation and allocation which is dependent
-// on the period size or sample rate.
-//
-// userData holds an opaque pointer to a data structure that was passed
-// in from the call to initAudio().
-//
-// Return true on success; returning false halts the program.
+//if user presses the PLAY/STOP button, this event will be sent from the GUI and change the value of gIsPlaying (0 or 1)
+int gIsPlaying = 0;
 
 
 
-/* Start playing a particular drum sound given by drumIndex.
- */
+
+bool setup(BelaContext *context, void *userData)
+{
+	//First we call the function that loads the drum sounds (WAV files)
+	if(initDrums()) {
+		//if unable, we stop.
+    	printf("Unable to load drum sounds. Check that you have all the WAV files!\n");
+    	return -1;
+    }
+    
+    //initialize gPattern with all sounds off. 
+    for (int i = 0; i<8; i++)
+    	gPattern[i] = 0;
+	
+	//setup the GUI 
+	myGui.setup(context->projectName);
+	
+	// Setup a buffer of floats (holding a maximum of 10 values) to be received from the GUI
+	myGui.setBuffer('f', 10); // Index = 0
+	
+	
+	return true;
+}
+
+
+
+void render(BelaContext *context, void *userData)
+{
+
+	for (int n = 0; n < context->audioFrames; n++) {
+	
+		//increase the counter for each audio frame
+		gCounter++;
+		
+		//if the counter has got to the threshold, it means we got to the next beat, so we:
+		//  1) Reset counter
+		//. 2) calculate the new pattern to be played in the next beat (which specific drum/sounds to activate)
+		//  3) If play button is on, trigger next event (i.e, activate the corresponding buffers)
+		if (gCounter * 1000 / context->audioSampleRate >= gEventIntervalMilliseconds ){
+		    gCounter=0;
+		    updatePattern();
+		    if ((int) gIsPlaying == 1) {
+		    	startNextBeat();
+		    }
+		    
+		    
+		}
+		
+    
+		//Now, we move forward the active read pointers, and turn off the ones that have reached the end of the buffer
+        //REMEMBER, although we have 8 sound samples (buffers), we have 16 readpointers, as the same sound could be played
+        //twice at the same time (e.g. is a sound sample is longer than the beat duration)
+        for (int i=0;i<16;i++) {
+			//read pointers that are active have a value between 0 and the buffer length to which is pointing to.
+			if (gDrumBufferForReadPointer[i]>=0){
+	    		//active read pointers will move to the next frame
+	    		if (gReadPointers[i] < gDrumSampleBufferLengths[gDrumBufferForReadPointer[i]]) {
+	    			gReadPointers[i]++;
+	    	
+	    				
+	    		}
+	    		//if the read pointer got to the limit of the buffer, then we deactivate it, setting its value to -1
+	    		else {
+	    			//reset the read pointer 
+	    			gReadPointers[i]=0;
+	    			
+	    			//free the read pointer to be used by other buffer
+	    			gDrumBufferForReadPointer[i]=-1;
+	    		}
+	    		
+	    		
+	    	}
+    	
+		}
+    
+    	//initially output in silence
+    	float out = 0;
+    
+    	//write buffer values of active read pointers to the output
+    	for (int i=0;i<16;i++){
+    		if (gDrumBufferForReadPointer[i]>=0)
+    			out += gDrumSampleBuffers[gDrumBufferForReadPointer[i]][gReadPointers[i]];
+    	}
+    	//reduce amplitude to avoid clipping
+    	out /= 2;
+    
+		//write to both channels
+		audioWrite(context,n,0,out/2);
+		audioWrite(context,n,1,out/2);
+		
+	}
+
+}
+
+
+
+
+
+//function called when we move to the next beat. It reads the active drums in the GUI and stores them in gPattern
+void updatePattern() {
+	
+	// Get buffer 0	 sent from the GUI	
+	DataBuffer buffer = myGui.getDataBuffer(0);
+	// Retrieve contents of the buffer as floats
+	float* data = buffer.getAsFloat();
+	//copy values to gPattern. Values are 1 if drum "i" is active for the current beat, and 0 if not
+	for (unsigned int i = 0; i < 8; i++){
+		gPattern[i] = (int)data[i];	
+	}
+
+	//read slider value sent from the GUI, and map it to proper values of event intervals		
+	gEventIntervalMilliseconds=400-(int)data[8];
+	//read status of PLAY/STOP button from GUI
+	gIsPlaying = (int)data[9];
+}
+
+//Start playing the next beat
+//This function is called in render when we move to the next beat. It checks which drums are contained in the next beat 
+//and it calls startPlayingDrum() to start playing each one of the drums contained in that beat. 
+void startNextBeat() {
+
+    //we loop through gPattern. If gPattern[i]==1, that means drum "i" should be played
+    
+	for (int i = 0; i < 8; i++){
+		if (gPattern[i]){
+			startPlayingDrum(i);
+		}
+	}
+	
+	//update the beat index (between 0 and 7), and send it to the GUI	
+	gCurrentBeat++;
+	if(gCurrentBeat > 7)
+	gCurrentBeat = 0;
+	myGui.sendBuffer(1, gCurrentBeat);
+
+
+
+	
+}
+
+
+
+//Start playing a particular drum sound given by drumIndex (function called by startNextBeat() )
+
 void startPlayingDrum(int drumIndex) {
 
-for (int i=0; i < 16;i++){
-	if (gDrumBufferForReadPointer[i] == -1) {
-		gDrumBufferForReadPointer[i]=drumIndex;
-		gReadPointers[i]=0;
-		break;
-	}
-
-}
-
-
-}
-
-/* Start playing the next event in the pattern */
-void startNextEvent() {
-
-
-// Retrieve contents of the buffer as floats
-
-
-
-	for (int i = 0; i<16;i++){
-		int doPlay = eventContainsDrum(pattern2[gCurrentIndexInPattern],i);
-		if (doPlay){
-			startPlayingDrum(i);
-		    playedDrums[i]=1;
+	//we loop through gDrumBufferForReadPointer array, looking for a free readpointer (i.e. with value = -1)
+	for (int i=0; i < 16;i++){
+		//if readpointer "i" is not in use, that means that gDrumBufferForReadPointer[i]==-1
+		if (gDrumBufferForReadPointer[i] == -1) {
+			//we assign drum (buffer) with index "drumIndex" to readpointer "i"
+			gDrumBufferForReadPointer[i]=drumIndex;
+			//we reset the value of readpointer "i", so it reads the buffer from the beginning
+			gReadPointers[i]=0;
+			//exit for loop
+			break;
 		}
-		else
-			playedDrums[i]=0;
-	}
-
-	gCurrentIndexInPattern++;
-	if (gCurrentIndexInPattern >= gPatternLengths[2])
-		gCurrentIndexInPattern=0;
-
-
-gBeats++;
-if(gBeats > 7)
-gBeats = 0;
-myGui.sendBuffer(2, gBeats);
-
-myGui.sendBuffer(1, playedDrums);
-
-
+		
+	}	
+	
+	
 }
 
-/* Returns whether the given event contains the given drum sound */
-int eventContainsDrum(int event, int drum) {
-	if(event & (1 << drum)){
-		return 1;
-
-	}
-	return 0;
-}
-
-
+//Function that stores each sound file in gDrumSampleBuffers. 
+//gDrumSampleBuffers[0] will contain the first sound file, gDrumSampleBuffers[1] the second one, and so on...
 int initDrums() {
-	/* Load drums from WAV files */
+	//Load drums from WAV files 
 	SNDFILE *sndfile ;
 	SF_INFO sfinfo ;
 	char filename[64];
@@ -170,7 +252,7 @@ int initDrums() {
 		if (!(sndfile = sf_open (filename, SFM_READ, &sfinfo))) {
 			printf("Couldn't open file %s\n", filename);
 
-			/* Free already loaded sounds */
+			//Free already loaded sounds
 			for(int j = 0; j < i; j++)
 				free(gDrumSampleBuffers[j]);
 			return 1;
@@ -179,7 +261,7 @@ int initDrums() {
 		if (sfinfo.channels != 1) {
 			printf("Error: %s is not a mono file\n", filename);
 
-			/* Free already loaded sounds */
+			//Free already loaded sounds
 			for(int j = 0; j < i; j++)
 				free(gDrumSampleBuffers[j]);
 			return 1;
@@ -190,7 +272,7 @@ int initDrums() {
 		if(gDrumSampleBuffers[i] == NULL) {
 			printf("Error: couldn't allocate buffer for %s\n", filename);
 
-			/* Free already loaded sounds */
+			//Free already loaded sounds
 			for(int j = 0; j < i; j++)
 				free(gDrumSampleBuffers[j]);
 			return 1;
@@ -199,7 +281,7 @@ int initDrums() {
 		int subformat = sfinfo.format & SF_FORMAT_SUBMASK;
 		int readcount = sf_read_float(sndfile, gDrumSampleBuffers[i], gDrumSampleBufferLengths[i]);
 
-		/* Pad with zeros in case we couldn't read whole file */
+		//Pad with zeros in case we couldn't read whole file 
 		for(int k = readcount; k < gDrumSampleBufferLengths[i]; k++)
 			gDrumSampleBuffers[i][k] = 0;
 
@@ -224,200 +306,22 @@ int initDrums() {
 	return 0;
 }
 
+
+
+// Release any resources that were allocated
+void cleanup(BelaContext *context, void *userData)
+{
+	cleanupDrums();
+}
+
 void cleanupDrums() {
 	for(int i = 0; i < NUMBER_OF_DRUMS; i++)
 		free(gDrumSampleBuffers[i]);
 }
 
-void initPatterns() {
-	int pattern0[16] = {0x01, 0x40, 0, 0, 0x02, 0, 0, 0, 0x20, 0, 0x01, 0, 0x02, 0, 0x04, 0x04};
-	int pattern1[32] = {0x09, 0, 0x04, 0, 0x06, 0, 0x04, 0,
-		 0x05, 0, 0x04, 0, 0x06, 0, 0x04, 0x02,
-		 0x09, 0, 0x20, 0, 0x06, 0, 0x20, 0,
-		 0x05, 0, 0x20, 0, 0x06, 0, 0x20, 0};
-	//int pattern2[16] = {0x11, 0, 0x10, 0x01, 0x12, 0x40, 0x04, 0x40, 0x11, 0x42, 0x50, 0x01, 0x12, 0x21, 0x30, 0x20};
-	pattern2[0] = 17;
-	pattern2[1] = 0;
-	pattern2[2] = 0x10;
-	pattern2[3] = 0x01;
-	pattern2[4] = 0x12;
-	pattern2[5] = 0x40;
-	pattern2[6] = 0x04;
-	pattern2[7] = 0x40;
 
-	int pattern3[32] = {0x81, 0x80, 0x80, 0x80, 0x01, 0x80, 0x80, 0x80, 0x81, 0, 0, 0, 0x41, 0x80, 0x80, 0x80,
-		0x81, 0x80, 0x80, 0, 0x41, 0, 0x80, 0x80, 0x81, 0x80, 0x80, 0x80, 0xC1, 0, 0, 0};
-	int pattern4[16] = {0x81, 0x02, 0, 0x81, 0x0A, 0, 0xA1, 0x10, 0xA2, 0x11, 0x46, 0x41, 0xC5, 0x81, 0x81, 0x89};
 
-	gPatternLengths[0] = 16;
-	gPatterns[0] = (int *)malloc(gPatternLengths[0] * sizeof(int));
-	memcpy(gPatterns[0], pattern0, gPatternLengths[0] * sizeof(int));
 
-	gPatternLengths[1] = 32;
-	gPatterns[1] = (int *)malloc(gPatternLengths[1] * sizeof(int));
-	memcpy(gPatterns[1], pattern1, gPatternLengths[1] * sizeof(int));
-
-	gPatternLengths[2] = 8;
-	gPatterns[2] = (int *)malloc(gPatternLengths[2] * sizeof(int));
-	memcpy(gPatterns[2], pattern2, gPatternLengths[2] * sizeof(int));
-
-	gPatternLengths[3] = 32;
-	gPatterns[3] = (int *)malloc(gPatternLengths[3] * sizeof(int));
-	memcpy(gPatterns[3], pattern3, gPatternLengths[3] * sizeof(int));
-
-	gPatternLengths[4] = 16;
-	gPatterns[4] = (int *)malloc(gPatternLengths[4] * sizeof(int));
-	memcpy(gPatterns[4], pattern4, gPatternLengths[4] * sizeof(int));
-
-	gPatternLengths[5] = 16;
-	gPatterns[5] = (int *)malloc(gPatternLengths[5] * sizeof(int));
-	memcpy(gPatterns[5], pattern4, gPatternLengths[5] * sizeof(int));
-}
-
-void updatePatterns() {
-
-// Get buffer 0
-		DataBuffer buffer = myGui.getDataBuffer(0);
-		// Retrieve contents of the buffer as floats
-		float* data = buffer.getAsFloat();
-		int y=0;
-	    for (int i=0;i<8;i++){
-	        y+=pow(2,i)*(int)data[i];
-	        //rt_printf("%i",(int)data[i]);
-	    }
-	    //rt_printf(" \n");
-			//pattern2[i]=(int)data[i];
-			pattern2[gBeats]=y;
-
-gEventIntervalMilliseconds=400-(int)data[8];
-gIsPlaying = (int)data[9];
-
-}
-
-
-void cleanupPatterns() {
-	for(int i = 0; i < NUMBER_OF_PATTERNS; i++)
-		free(gPatterns[i]);
-}
-
-
-
-
-bool setup(BelaContext *context, void *userData)
-{
-	/* Step 2: initialise GPIO pins */
-	if(initDrums()) {
-    	printf("Unable to load drum sounds. Check that you have all the WAV files!\n");
-    	return -1;
-    }
-    initPatterns();
-
-	myGui.setup(context->projectName);
-
-	// Setup buffer of floats (holding a maximum of 2 values)
-	myGui.setBuffer('f', 10); // Index = 0
-
-
-	return true;
-}
-
-// render() is called regularly at the highest priority by the audio engine.
-// Input and output are given from the audio hardware and the other
-// ADCs and DACs (if available). If only audio is available, numMatrixFrames
-// will be 0.
-
-void render(BelaContext *context, void *userData)
-{
-
-
-//rt_printf("combined: %i", value);
-//gIsPlaying = 1;
-
-
-//int speed = map(value,0,3.3/4.096,50,1000);
-
-
-
-	for (int n = 0; n < context->audioFrames; n++) {
-
-
-
-
-
-	   //gEventIntervalMilliseconds = 500;
-
-		gCounter++;
-
-
-		if (gCounter * 1000 / context->audioSampleRate >= gEventIntervalMilliseconds ){
-		    gCounter=0;
-		    updatePatterns();
-		    if ((int) gIsPlaying == 0) {
-		    startNextEvent();
-		    }
-
-
-		}
-
-
-
-
-
-
-        for (int i=0;i<16;i++) {
-    	if (gDrumBufferForReadPointer[i]>=0){
-    		if (gReadPointers[i] < gDrumSampleBufferLengths[gDrumBufferForReadPointer[i]]) {
-    			gReadPointers[i]++;
-
-
-    		}
-    		else {
-    			gReadPointers[i]=0;
-    			gDrumBufferForReadPointer[i]=-1;
-    		}
-
-
-    	}
-
-    }
-
-    //initially output in silence
-    float out = 0;
-
-    //if gReadPointer hasn't got until the end of the buffer, write the sample to out and increase gReadPointer by one
-    // when gReadPointer == gDrumSampleBufferLengths[] then it stay on that value until the button is pressed again
-    for (int i=0;i<16;i++){
-    if (gDrumBufferForReadPointer[i]>=0) {
-    	out += gDrumSampleBuffers[gDrumBufferForReadPointer[i]][gReadPointers[i]];
-
-    }
-    }
-
-    out /= 2;
-
-	//write to both channels
-	audioWrite(context,n,0,out/2);
-	audioWrite(context,n,1,out/2);
-
-
-
-
-
-
-	}
-
-
-	}
-
-
-// cleanup_render() is called once at the end, after the audio has stopped.
-// Release any resources that were allocated in initialise_render().
-
-void cleanup(BelaContext *context, void *userData)
-{
-cleanupPatterns();
-cleanupDrums();
-}
 
 
 
