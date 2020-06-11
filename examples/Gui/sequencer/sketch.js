@@ -32,7 +32,7 @@ function setup() {
 	rSlider.position(50,100);
 	
 	//create and setup text
-	p = createP("Velocity: ");
+	p = createP("Speed: ");
 	p.position(50,60);
 	
 	//create and setup PLAY/STOP button
